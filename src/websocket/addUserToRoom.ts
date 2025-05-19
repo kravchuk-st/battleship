@@ -1,4 +1,4 @@
-import { data, changeData } from 'src/db';
+import { data } from 'src/db';
 import { updateRoom } from './updateRoom';
 import { ICustomWebSocket, IRequest, IPlayer, IIndexRoom, IRoom } from 'src/types';
 
@@ -22,8 +22,7 @@ const addUserToExistRoom = (ws: ICustomWebSocket, request: IRequest) => {
   const theRoomToWhichWeAddThePlayer = data.roomUsers.find((room) => room.roomId === roomIndex.indexRoom) as IRoom;
 
   if (data.roomUsers.find((room) => room.roomId === addPlayerToRoom.index)) {
-    let newUsers = data.roomUsers.filter((room) => room.roomId !== addPlayerToRoom.index);
-    changeData('roomUsers', newUsers);
+    data.roomUsers = data.roomUsers.filter((room) => room.roomId !== addPlayerToRoom.index);
   }
 
   theRoomToWhichWeAddThePlayer.roomUsers.push(addPlayerToRoom);
@@ -69,8 +68,7 @@ const placementOfShipsForTheGame = (request: IRequest) => {
   connection1.send(JSON.stringify(response1));
   connection2.send(JSON.stringify(response2));
 
-  let newRoomUsers = data.roomUsers.filter((room) => room.roomId !== currentRoom.roomId);
-  changeData('roomUsers', newRoomUsers);
+  data.roomUsers = data.roomUsers.filter((room) => room.roomId !== currentRoom.roomId);
 
   updateRoom();
 };

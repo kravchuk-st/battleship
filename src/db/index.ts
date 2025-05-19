@@ -1,18 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
-import { IRequest, IPlayer, IRoom, ICustomWebSocket, IWinner, IData, IPlayerMatrixForTheGame } from 'src/types';
+import { IData, IRequest, IPlayer, ICustomWebSocket } from 'src/types';
 
-export const data = {
-  players: [] as IPlayer[],
-  connections: [] as ICustomWebSocket[],
-  roomUsers: [] as IRoom[],
-  winners: [] as IWinner[],
-  currentGames: [] as IPlayerMatrixForTheGame[],
+export const data: IData = {
+  players: [],
+  connections: [],
+  roomUsers: [],
+  winners: [],
+  currentGames: [],
 };
-
-// export let players: IPlayer[] = [];
-// export let connections: ICustomWebSocket[] = [];
-// export let roomUsers: IRoom[] = [];
-// export let winners: IWinner[] = [];
 
 export function playerExists(request: IRequest) {
   const { name }: IPlayer = JSON.parse(request.data);
@@ -46,8 +41,4 @@ export function registerPlayer(name: string, password: string, ws: ICustomWebSoc
   };
 
   return response;
-}
-
-export function changeData<K extends keyof IData>(fild: K, value: IData[K]) {
-  data[fild] = value;
 }

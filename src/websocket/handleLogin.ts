@@ -1,3 +1,4 @@
+import { botCreation } from './botCreation';
 import { data } from 'src/db';
 import { ICustomWebSocket, IRequest, IPlayer } from 'src/types';
 
@@ -38,5 +39,6 @@ export function handleLogin(ws: ICustomWebSocket, request: IRequest) {
     };
 
     ws.send(JSON.stringify(response));
+    botCreation();
   }
 }

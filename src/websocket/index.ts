@@ -1,5 +1,5 @@
 import { WebSocketServer } from 'ws';
-import { data, playerExists, changeData } from 'src/db';
+import { data, playerExists } from 'src/db';
 import {
   ICustomWebSocket,
   IRequest,
@@ -20,6 +20,10 @@ import { addUserToRoom } from './addUserToRoom';
 import { createMatrix } from './createMatrix';
 import { playerTurn } from './playerTurn';
 import { handleAttack } from './handleAttack';
+import { handleBotAttack } from './handleBotAttack';
+import { isGameWithBot } from './isGameWithBot';
+import { playerTurnWithBot } from './playerTurnWithBot';
+import { singlePlay } from './singlePlay';
 
 const webSocketPort = 3000;
 
@@ -38,11 +42,8 @@ wss.on('connection', (ws: ICustomWebSocket) => {
   ws.on('close', () => {
     console.log('A client disconnected');
 
-    let newConnections = data.connections.filter((connection) => connection.index !== ws.index);
-    let newUsers = data.roomUsers.filter((room) => room.roomId !== ws.index);
-
-    changeData('connections', newConnections);
-    changeData('roomUsers', newUsers);
+    data.connections = data.connections.filter((connection) => connection.index !== ws.index);
+    data.roomUsers = data.roomUsers.filter((room) => room.roomId !== ws.index);
 
     updateRoom();
     flawlessWictory(ws);
@@ -72,10 +73,13 @@ export function handleRequest(ws: ICustomWebSocket, request: IRequest) {
       addShips(request);
       break;
     case 'attack':
-      handleAttack(request, false);
+      isGameWithBot(request) ? handleBotAttack(ws, request, false) : handleAttack(request, false);
       break;
     case 'randomAttack':
-      handleAttack(request, true);
+      isGameWithBot(request) ? handleBotAttack(ws, request, true) : handleAttack(request, true);
+      break;
+    case 'single_play':
+      singlePlay(ws);
       break;
   }
 }
@@ -122,8 +126,7 @@ const flawlessWictory = (ws: ICustomWebSocket) => {
       updateWinners(winnerOfTheGame.indexPlayer);
     }
   } else {
-    let currentGamesNew = data.currentGames.filter((game) => game.currentGameId !== ws.index);
-    changeData('currentGames', currentGamesNew);
+    data.currentGames = data.currentGames.filter((game) => game.currentGameId !== ws.index);
   }
 };
 
@@ -177,7 +180,7 @@ const addShips = (request: IAddShipsRequest) => {
     const bot2 = data.players.find((player) => player.index === currentGame[1].indexPlayer) as IPlayer;
 
     if (bot1.name === 'BOT' || bot2?.name === 'BOT') {
-      // startGameWithBot(currentGame);
+      startGameWithBot(currentGame);
     } else {
       startTheGame(currentGame);
     }
@@ -224,4 +227,29 @@ const startTheGame = (playersInGame: IPlayerMatrixForTheGame[]) => {
   gameCreator.turn = true;
 
   playerTurn(connection1, connection2, gameCreator.indexPlayer);
+};
+
+const startGameWithBot = (arrayForGameWithBot: IPlayerMatrixForTheGame[]) => {
+  const gameCreator = arrayForGameWithBot.find(
+    (client) => client.indexPlayer === client.currentGameId
+  ) as IPlayerMatrixForTheGame;
+
+  const creatorClientData = JSON.stringify({
+    ships: gameCreator.ships,
+    currentPlayerIndex: gameCreator.indexPlayer,
+  });
+
+  const response1 = {
+    type: 'start_game',
+    data: creatorClientData,
+    id: 0,
+  };
+
+  const connection1 = data.connections.find((item) => item.index === gameCreator.indexPlayer) as ICustomWebSocket;
+
+  connection1.send(JSON.stringify(response1));
+
+  gameCreator.turn = true;
+
+  playerTurnWithBot(connection1, gameCreator.indexPlayer);
 };

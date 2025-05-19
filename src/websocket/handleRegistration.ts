@@ -1,3 +1,4 @@
+import { botCreation } from './botCreation';
 import { registerPlayer } from 'src/db';
 import { ICustomWebSocket, IRequest, IPlayer } from 'src/types';
 
@@ -32,5 +33,6 @@ export function handleRegistration(ws: ICustomWebSocket, request: IRequest) {
     const response = registerPlayer(name, password, ws);
 
     ws.send(JSON.stringify(response));
+    botCreation();
   }
 }
