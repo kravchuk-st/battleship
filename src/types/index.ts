@@ -32,6 +32,12 @@ export interface IRequest {
   id: number;
 }
 
+export interface IResponse {
+  type: string;
+  data: string;
+  id: number;
+}
+
 export interface IFinishMessage {
   type: 'finish';
   data: string;
@@ -59,4 +65,51 @@ export interface IData {
   roomUsers: IRoom[];
   winners: IWinner[];
   currentGames: IPlayerMatrixForTheGame[];
+}
+
+export interface IAddShipsRequest {
+  type: string;
+  data: string;
+  id: number;
+}
+
+export type ShipType = 'small' | 'medium' | 'large' | 'huge';
+
+interface IPosition {
+  x: number;
+  y: number;
+}
+
+export interface IShip {
+  position: IPosition;
+  direction: boolean;
+  length: number;
+  type: ShipType;
+}
+
+export interface IAddShipsData {
+  gameId: string;
+  ships: IShip[];
+  indexPlayer: string;
+}
+
+export interface ICoordinates {
+  x: number;
+  y: number;
+}
+
+export interface IPlayerCoordinates extends ICoordinates {
+  gameId: string;
+  indexPlayer: string;
+}
+
+export interface IUpdatedCoordinates extends ICoordinates {
+  status: MatrixCells;
+}
+
+export type Status = 'miss' | 'killed' | 'shot' | 'retry';
+
+export interface IAttackFeedback {
+  status: Status;
+  updatedMatrix: MatrixCells[][];
 }

@@ -1,6 +1,15 @@
 import { WebSocketServer } from 'ws';
 import { data, playerExists, changeData } from 'src/db';
-import { ICustomWebSocket, IRequest, IPlayer, IPlayerMatrixForTheGame, IFinishMessage } from 'src/types';
+import {
+  ICustomWebSocket,
+  IRequest,
+  IPlayer,
+  IPlayerMatrixForTheGame,
+  IFinishMessage,
+  IAddShipsRequest,
+  IAddShipsData,
+  IShip,
+} from 'src/types';
 
 import { updateRoom } from './updateRoom';
 import { winnerUpdateResponse } from './updateWinners';
@@ -8,6 +17,9 @@ import { handleLogin } from './handleLogin';
 import { handleRegistration } from './handleRegistration';
 import { handleRoomCreate } from './handleRoomCreate';
 import { addUserToRoom } from './addUserToRoom';
+import { createMatrix } from './createMatrix';
+import { playerTurn } from './playerTurn';
+import { handleAttack } from './handleAttack';
 
 const webSocketPort = 3000;
 
@@ -55,6 +67,15 @@ export function handleRequest(ws: ICustomWebSocket, request: IRequest) {
       break;
     case 'add_user_to_room':
       addUserToRoom(ws, request);
+      break;
+    case 'add_ships':
+      addShips(request);
+      break;
+    case 'attack':
+      handleAttack(request, false);
+      break;
+    case 'randomAttack':
+      handleAttack(request, true);
       break;
   }
 }
@@ -131,4 +152,76 @@ export const updateWinners = (id: string) => {
   }
 
   winnerUpdateResponse();
+};
+
+const addShips = (request: IAddShipsRequest) => {
+  const shipsData = JSON.parse(request.data) as IAddShipsData;
+
+  const ships: IShip[] = shipsData.ships;
+
+  const matrix = createMatrix(ships);
+
+  const player: IPlayerMatrixForTheGame = {
+    currentGameId: shipsData.gameId,
+    ships: matrix,
+    indexPlayer: shipsData.indexPlayer,
+    turn: false,
+  };
+
+  data.currentGames.push(player);
+
+  const currentGame = data.currentGames.filter((game) => game.currentGameId === player.currentGameId);
+
+  if (currentGame.length === 2) {
+    const bot1 = data.players.find((player) => player.index === currentGame[0].indexPlayer) as IPlayer;
+    const bot2 = data.players.find((player) => player.index === currentGame[1].indexPlayer) as IPlayer;
+
+    if (bot1.name === 'BOT' || bot2?.name === 'BOT') {
+      // startGameWithBot(currentGame);
+    } else {
+      startTheGame(currentGame);
+    }
+  }
+};
+
+const startTheGame = (playersInGame: IPlayerMatrixForTheGame[]) => {
+  const gameCreator = playersInGame.find(
+    (client) => client.indexPlayer === client.currentGameId
+  ) as IPlayerMatrixForTheGame;
+
+  const secondPlayer = playersInGame.filter(
+    (client) => client.indexPlayer !== gameCreator.indexPlayer && gameCreator.currentGameId === gameCreator.indexPlayer
+  )[0];
+
+  const creatorClientData = JSON.stringify({
+    ships: gameCreator.ships,
+    currentPlayerIndex: gameCreator.indexPlayer,
+  });
+  const secondPlayerData = JSON.stringify({
+    ships: secondPlayer.ships,
+    currentPlayerIndex: secondPlayer.indexPlayer,
+  });
+
+  const response1 = {
+    type: 'start_game',
+    data: creatorClientData,
+    id: 0,
+  };
+
+  const response2 = {
+    type: 'start_game',
+    data: secondPlayerData,
+    id: 0,
+  };
+
+  const connection1 = data.connections.find((item) => item.index === gameCreator.indexPlayer) as ICustomWebSocket;
+
+  const connection2 = data.connections.find((item) => item.index === secondPlayer.indexPlayer) as ICustomWebSocket;
+
+  connection1.send(JSON.stringify(response1));
+  connection2.send(JSON.stringify(response2));
+
+  gameCreator.turn = true;
+
+  playerTurn(connection1, connection2, gameCreator.indexPlayer);
 };
