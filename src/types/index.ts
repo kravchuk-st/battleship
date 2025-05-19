@@ -21,8 +21,42 @@ export interface IPlayer {
   wins: number;
 }
 
+export interface IWinner {
+  name: string;
+  wins: number;
+}
+
 export interface IRequest {
   type: string;
   data: string;
   id: number;
+}
+
+export interface IFinishMessage {
+  type: 'finish';
+  data: string;
+  id: number;
+}
+
+export interface IIndexRoom {
+  indexRoom: string;
+}
+
+export type MatrixCells = 'miss' | 'killed' | 'shot' | 'small' | 'medium' | 'large' | 'huge' | 'empty';
+
+export type GameMatrix = MatrixCells[][];
+
+export interface IPlayerMatrixForTheGame {
+  currentGameId: string;
+  ships: GameMatrix;
+  indexPlayer: string;
+  turn: boolean;
+}
+
+export interface IData {
+  players: IPlayer[];
+  connections: ICustomWebSocket[];
+  roomUsers: IRoom[];
+  winners: IWinner[];
+  currentGames: IPlayerMatrixForTheGame[];
 }

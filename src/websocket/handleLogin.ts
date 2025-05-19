@@ -1,10 +1,10 @@
-import { players, connections } from 'src/db';
+import { data } from 'src/db';
 import { ICustomWebSocket, IRequest, IPlayer } from 'src/types';
 
 export function handleLogin(ws: ICustomWebSocket, request: IRequest) {
   const { name, password }: IPlayer = JSON.parse(request.data);
 
-  const player = players.find((player) => player.name === name && player.password === password) as IPlayer;
+  const player = data.players.find((player) => player.name === name && player.password === password) as IPlayer;
 
   if (!player) {
     const response = {
@@ -20,11 +20,11 @@ export function handleLogin(ws: ICustomWebSocket, request: IRequest) {
     ws.send(JSON.stringify(response));
     return;
   } else {
-    const loginPlayer = players.find((player) => player.name === name && player.password === password) as IPlayer;
+    const loginPlayer = data.players.find((player) => player.name === name && player.password === password) as IPlayer;
 
     ws.index = loginPlayer?.index;
 
-    connections.push(ws);
+    data.connections.push(ws);
 
     const response = {
       type: 'reg',

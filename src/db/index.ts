@@ -1,13 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
-import { IRequest, IPlayer, IRoom, ICustomWebSocket } from 'src/types';
+import { IRequest, IPlayer, IRoom, ICustomWebSocket, IWinner, IData, IPlayerMatrixForTheGame } from 'src/types';
 
-export let players: IPlayer[] = [];
-export let connections: ICustomWebSocket[] = [];
-export let roomUsers: IRoom[] = [];
+export const data = {
+  players: [] as IPlayer[],
+  connections: [] as ICustomWebSocket[],
+  roomUsers: [] as IRoom[],
+  winners: [] as IWinner[],
+  currentGames: [] as IPlayerMatrixForTheGame[],
+};
+
+// export let players: IPlayer[] = [];
+// export let connections: ICustomWebSocket[] = [];
+// export let roomUsers: IRoom[] = [];
+// export let winners: IWinner[] = [];
 
 export function playerExists(request: IRequest) {
   const { name }: IPlayer = JSON.parse(request.data);
-  return players.some((player) => player.name === name);
+  return data.players.some((player) => player.name === name);
 }
 
 export function registerPlayer(name: string, password: string, ws: ICustomWebSocket) {
@@ -22,8 +31,8 @@ export function registerPlayer(name: string, password: string, ws: ICustomWebSoc
     wins: 0,
   };
 
-  players.push(newPlayer);
-  connections.push(ws);
+  data.players.push(newPlayer);
+  data.connections.push(ws);
 
   const response = {
     type: 'reg',
@@ -37,4 +46,8 @@ export function registerPlayer(name: string, password: string, ws: ICustomWebSoc
   };
 
   return response;
+}
+
+export function changeData<K extends keyof IData>(fild: K, value: IData[K]) {
+  data[fild] = value;
 }
