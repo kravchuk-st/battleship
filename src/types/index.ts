@@ -20,3 +20,9 @@ export interface IPlayer {
   index: string;
   wins: number;
 }
+
+export interface IRequest {
+  type: string;
+  data: string;
+  id: number;
+}

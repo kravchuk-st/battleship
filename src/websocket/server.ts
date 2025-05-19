@@ -1,14 +1,25 @@
 import { WebSocketServer } from 'ws';
-import { IPlayer, ICustomWebSocket, IRoom } from '../types'
+import { playerExists } from 'src/db';
+import { ICustomWebSocket, IRequest } from 'src/types';
 
-const webSocketPort = 3000
+import { handleLogin } from './handleLogin';
+import { handleRegistration } from './handleRegistration';
 
-export let players: IPlayer[] = [];
-export let connections: ICustomWebSocket[] = [];
-export let roomUsers: IRoom[] = [];
+const webSocketPort = 3000;
 
-export function handleRequest(ws: ICustomWebSocket, request: Request) {
+export function handleRequest(ws: ICustomWebSocket, request: IRequest) {
   console.log(request);
+
+  switch (request.type) {
+    case 'reg':
+      if (playerExists(request)) {
+        handleLogin(ws, request);
+      } else {
+        handleRegistration(ws, request);
+      }
+
+      break;
+  }
 }
 
 export const wss = new WebSocketServer({
