@@ -1,0 +1,5 @@
+/front
+node_modules
+dist
+build
+coverage
